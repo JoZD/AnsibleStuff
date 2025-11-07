@@ -1,0 +1,4 @@
+---
+ansible_user: ubuntu
+ansible_become: true
+package_state: present

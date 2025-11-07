@@ -1,0 +1,9 @@
+---
+- name: Ensure basic packages are installed
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: "{{ package_state }}"
+  loop:
+    - vim
+    - curl
+    - git
