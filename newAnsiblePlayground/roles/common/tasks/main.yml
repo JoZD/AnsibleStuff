@@ -1,6 +1,5 @@
 ---
-- name: Apply SSH Hardening (CIS)
-  hosts: all
-  become: yes
-  roles:
-    - ssh_hardening
+# Main task file for the common role — includes SSH hardening
+
+- name: Include SSH Hardening task file
+  ansible.builtin.include_tasks: ssh_hardening.yaml
