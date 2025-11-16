@@ -1,0 +1,123 @@
+---
+# ======================================================
+# HARDEN SSH SERVER BASED ON CIS BENCHMARK (FINAL CLEAN)
+# ======================================================
+
+# -----------------------------------------
+# 1. Secure main sshd_config permissions
+# -----------------------------------------
+- name: Ensure main sshd_config has secure permissions (0600 root:root)
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: "0600"
+    state: file
+
+
+# --------------------------------------------------
+# 2. Secure include files in sshd_config.d
+# --------------------------------------------------
+- name: Find SSH include files in sshd_config.d
+  ansible.builtin.find:
+    paths: /etc/ssh/sshd_config.d
+    file_type: file
+  register: sshd_include_files
+
+- name: Ensure SSH include files have secure permissions (0600 root:root)
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: "0600"
+    state: file
+  loop: "{{ sshd_include_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+
+# -------------------------------------------------------------
+# 3. Secure PRIVATE host keys
+# -------------------------------------------------------------
+- name: Find SSH private host keys
+  ansible.builtin.find:
+    paths: /etc/ssh
+    patterns: "ssh_host_*_key"
+    file_type: file
+  register: ssh_private_keys
+
+- name: Ensure SSH private host keys have permission 0600 root:root
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: "0600"
+    state: file
+  loop: "{{ ssh_private_keys.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+
+# -------------------------------------------------------------
+# 4. Secure PUBLIC host keys
+# -------------------------------------------------------------
+- name: Find SSH public host keys
+  ansible.builtin.find:
+    paths: /etc/ssh
+    patterns: "ssh_host_*_key.pub"
+    file_type: file
+  register: ssh_public_keys
+
+- name: Ensure SSH public host keys have permission 0644 root:root
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: "0644"
+    state: file
+  loop: "{{ ssh_public_keys.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+
+# -------------------------------------------------------------
+# 5. Ensure Banner is configured properly
+# -------------------------------------------------------------
+- name: Ensure sshd_config has correct Banner directive
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*Banner'
+    line: 'Banner /etc/issue.net'
+    owner: root
+    group: root
+    mode: "0600"
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart ssh
+
+
+# -------------------------------------------------------------
+# 6. Apply all SSH security settings (CIS)
+# -------------------------------------------------------------
+- name: Apply SSH hardening security options
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*#?\s*{{ item.option }}\b.*'
+    line: '{{ item.option }} {{ item.value }}'
+    owner: root
+    group: root
+    mode: "0600"
+    validate: "/usr/sbin/sshd -t -f %s"
+    state: present
+  loop: "{{ server_ssh_security_settings }}"
+  loop_control:
+    label: "{{ item.option }}"
+  notify: restart ssh
+
+
+# -------------------------------------------------------------
+# 7. Debug (optional)
+# -------------------------------------------------------------
+- name: Display final sshd_config
+  ansible.builtin.command: cat /etc/ssh/sshd_config
+  changed_when: false
+  tags: [ssh_debug]
