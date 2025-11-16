@@ -1,0 +1,6 @@
+---
+- name: Apply SSH Hardening via common role
+  hosts: all
+  become: yes
+  roles:
+    - common
