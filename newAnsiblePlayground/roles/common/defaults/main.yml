@@ -1,2 +1,46 @@
----
-timezone: UTC
+# ===============================
+# SSH SECURITY CONFIG (CIS)
+# ===============================
+
+server_ssh_allow_users:
+  - athena
+  - hadron
+  - ht2p
+  - rapid7
+
+server_ssh_security_settings:
+  # Access control
+  - { option: "AllowUsers",             value: "{{ server_ssh_allow_users | join(' ') }}" }
+
+  # Login and session limits
+  - { option: "MaxAuthTries",           value: "4" }
+  - { option: "MaxSessions",            value: "10" }
+  - { option: "MaxStartups",            value: "10:30:60" }
+
+  # Authentication hardening
+  - { option: "PermitEmptyPasswords",   value: "no" }
+  - { option: "PermitRootLogin",        value: "no" }
+  - { option: "PermitUserEnvironment",  value: "no" }
+  - { option: "UsePAM",                 value: "yes" }
+
+  # Banner
+  - { option: "Banner",                 value: "/etc/issue.net" }
+
+  # CIS Hardening
+  - { option: "ClientAliveInterval",    value: "15" }
+  - { option: "ClientAliveCountMax",    value: "3" }
+  - { option: "DisableForwarding",      value: "yes" }
+  - { option: "GSSAPIAuthentication",   value: "no" }
+  - { option: "HostbasedAuthentication",value: "no" }
+  - { option: "IgnoreRhosts",           value: "yes" }
+  - { option: "LoginGraceTime",         value: "60" }
+  - { option: "LogLevel",               value: "INFO" }
+
+  # Crypto policy (CIS older benchmark)
+  - { option: "Ciphers", value: "-3des-cbc,aes128-cbc,aes192-cbc,aes256-cbc,chacha20-poly1305@openssh.com" }
+
+  - { option: "MACs",
+      value: "-hmac-md5,hmac-md5-96,hmac-ripemd160,hmac-sha1-96,umac-64@openssh.com,hmac-md5-etm@openssh.com,hmac-md5-96-etm@openssh.com,hmac-ripemd160-etm@openssh.com,hmac-sha1-96-etm@openssh.com,umac-64-etm@openssh.com,umac-128-etm@openssh.com" }
+
+  - { option: "KexAlgorithms",
+      value: "-diffie-hellman-group1-sha1,diffie-hellman-group14-sha1,diffie-hellman-group-exchange-sha1" }
