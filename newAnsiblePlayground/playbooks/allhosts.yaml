@@ -1,5 +1,8 @@
----
 - name: Apply SSH Hardening via common role
   hosts: all
+  become: true
+  become_user: root
+  become_method: sudo
+
   roles:
     - common
